@@ -1,0 +1,28 @@
+include(CheckIncludeFile)
+set(SOURCES src/nfd_common.c)
+
+macro(REQUIRE_INCLUDE_FILE path name)
+  check_include_file(${path} ${name})
+  if(NOT ${name})
+    message(FATAL_ERROR "${path} not found")
+  endif()
+endmacro()
+
+if(WIN32)
+  require_include_file(windows.h HAS_WINDOWS)
+  list(APPEND SOURCES src/nfd_win.cpp)
+elseif(UNIX)
+  find_package(PkgConfig REQUIRED)
+  pkg_check_modules(GTK REQUIRED gtk+-3.0)
+  include_directories(${GTK_INCLUDE_DIRS})
+  link_directories(${GTK_LIBRARY_DIRS})
+  add_definitions(${GTK_CFLAGS_OTHER})
+  list(APPEND SOURCES src/nfd_gtk.c)
+elseif(UNIX)
+  message(FATAL_ERROR "Cannot detect your system")
+endif()
+
+add_library(nativefiledialog ${SOURCES})
+target_link_libraries(nativefiledialog ${GTK_LIBRARIES})
+
+target_include_directories(nativefiledialog PUBLIC src/include)
